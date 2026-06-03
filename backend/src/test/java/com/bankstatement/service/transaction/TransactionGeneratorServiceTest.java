@@ -184,10 +184,13 @@ class TransactionGeneratorServiceTest {
 
         for (Transaction txn : txns) {
             String n = txn.getNarration();
-            assertTrue(n.startsWith("TO TRANSFER-UPI/") || n.startsWith("BY TRANSFER-UPI/")
-                            || n.startsWith("BY TRANSFER-IMPS/") || n.startsWith("BY TRANSFER-NEFT/"),
+            assertTrue(n.startsWith("UPI/") || n.startsWith("BY TRANSFER-UPI/")
+                            || n.startsWith("BY TRANSFER-IMPS/") || n.startsWith("BY TRANSFER-NEFT/")
+                            || BoiNarrationGenerator.isMerchantDebitLabel(n),
                     "Expected BOI transfer remark, got: " + n);
-            assertFalse(n.equals("ATM CASH WDL"), "ATM must not appear when ATM disabled: " + n);
+            assertFalse(n.equals("UPI") || n.equals("UPI CREDIT") || n.equals("NEFT") || n.equals("IMPS"),
+                    "Generic category remark: " + n);
+            assertFalse(n.startsWith("ATM CASH WDL"), "ATM must not appear when ATM disabled: " + n);
             assertFalse(n.equals("EMI"), "EMI must not appear when EMI disabled: " + n);
             assertFalse(n.contains("SBInt.Pd:"), "Interest must not appear when interest disabled: " + n);
             assertFalse(n.contains("Chrgs"), "Charges must not appear when interest disabled: " + n);
@@ -211,8 +214,9 @@ class TransactionGeneratorServiceTest {
 
         for (Transaction txn : txns) {
             String n = txn.getNarration();
-            assertEquals("ATM CASH WDL", n, "Expected ATM-only remark, got: " + n);
-            assertFalse(n.startsWith("TO TRANSFER-UPI/"), "UPI must not appear when UPI disabled: " + n);
+            assertTrue(n.startsWith("ATM CASH WDL/"), "Expected ATM-only remark, got: " + n);
+            assertFalse(n.startsWith("UPI/"), "UPI must not appear when UPI disabled: " + n);
+            assertFalse(n.startsWith("BY TRANSFER-UPI/"), "UPI must not appear when UPI disabled: " + n);
         }
     }
 
@@ -271,6 +275,27 @@ class TransactionGeneratorServiceTest {
     }
 
     @Test
+    void boiWithoutUpiNeverUsesMerchantLabels() {
+        Statement statement = sampleStatement("BOI", "995610110012688");
+        statement.setOpeningBalance(new BigDecimal("300000.00"));
+        statement.getTransactionSettings().setSalary(false);
+        statement.getTransactionSettings().setUpi(false);
+        statement.getTransactionSettings().setAtm(true);
+        statement.getTransactionSettings().setEmi(false);
+        statement.getTransactionSettings().setInterest(false);
+        statement.getTransactionSettings().setMinTransactions(10);
+        statement.getTransactionSettings().setMaxTransactions(10);
+
+        List<Transaction> txns = generator.generate(statement);
+        for (Transaction txn : txns) {
+            String n = txn.getNarration();
+            assertFalse(BoiNarrationGenerator.isMerchantDebitLabel(n),
+                    "Merchant remark when UPI disabled: " + n);
+            assertFalse(n.startsWith("UPI/"), "UPI remark when UPI disabled: " + n);
+        }
+    }
+
+    @Test
     void boiNarrationsUseRealisticPatterns() {
         Statement statement = sampleStatement("BOI", "995610110012688");
 
@@ -290,15 +315,22 @@ class TransactionGeneratorServiceTest {
             assertFalse(n.toLowerCase().contains("dummy"));
             assertFalse(n.startsWith("AUTO EMI"));
             assertFalse(n.startsWith("SALARY CREDIT -"));
+            assertFalse(n.equals("UPI") || n.equals("UPI CREDIT") || n.equals("NEFT") || n.equals("IMPS"),
+                    "Generic category remark: " + n);
+            assertFalse(n.contains("NEFT SALARY /") || n.startsWith("SALARY CREDIT /"),
+                    "Generic salary remark: " + n);
             narrations.add(n);
 
-            if (n.startsWith("TO TRANSFER-") || n.startsWith("BY TRANSFER-")
-                    || n.equals("ATM CASH WDL") || n.equals("INT. CREDIT")
+            if (n.startsWith("UPI/") || n.startsWith("BY TRANSFER-")
+                    || n.startsWith("ATM CASH WDL/") || n.equals("INT.PD")
                     || n.startsWith("ECS/") || n.startsWith("ACH DEBIT/")
-                    || n.contains("Chrgs") || n.contains("BY TRANSFER-SALARY/")) {
+                    || n.equals("SMS CHARGES") || n.equals("ATM CHARGES")
+                    || BoiNarrationGenerator.isMerchantDebitLabel(n)
+                    || n.contains("BY TRANSFER-SALARY/")) {
                 hasRealistic = true;
             }
-            if (n.startsWith("TO TRANSFER-UPI/") || n.startsWith("BY TRANSFER-UPI/")) {
+            if (n.startsWith("UPI/") || n.startsWith("BY TRANSFER-UPI/")
+                    || BoiNarrationGenerator.isMerchantDebitLabel(n)) {
                 hasUpi = true;
             }
         }

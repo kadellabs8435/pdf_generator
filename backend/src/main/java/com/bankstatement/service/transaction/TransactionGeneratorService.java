@@ -262,7 +262,7 @@ public class TransactionGeneratorService {
     private Transaction buildLegacySalaryCredit(LocalDate date, BigDecimal balance, boolean boi, boolean kotak,
                                                 TransactionSettings settings, Set<String> usedNarrations) {
         BankRemarkGenerator.SalaryRemark salary = boi
-                ? BankRemarkGenerator.configuredSalaryUnique("EMPLOYER", date, random, usedNarrations)
+                ? BoiNarrationGenerator.configuredSalaryUnique("EMPLOYER", random, usedNarrations)
                 : BankRemarkGenerator.legacySalary(date, random);
         BigDecimal amount = kotak
                 ? HighValueAmountRules.clusteredCredit(random)

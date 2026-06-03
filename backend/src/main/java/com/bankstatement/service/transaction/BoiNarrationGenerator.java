@@ -9,14 +9,41 @@ import java.util.function.Supplier;
 /** Realistic Bank of India statement remark patterns. */
 final class BoiNarrationGenerator {
 
-    private static final String[] CHARGE_TYPES = {
-            "SMSChrgsJAN-MAR26+GST+101", "SMSChrgsAPR-JUN26+GST+98", "ATMCHG+GST", "AMBCHG+GST",
-            "IMPSChrgs+GST", "NEFTChrgs+GST", "AnnualMaint+GST"
+    private static final String[] ATM_LOCATIONS = {
+            "BIAORA", "RAJGARH", "BHOPAL", "INDORE", "UJJAIN", "GUNA", "DEWAS", "SHIVPURI"
     };
+
+    private static final String[] NEFT_COMPANIES = {
+            "TATA STEEL LIMITED", "INFOSYS LIMITED", "TCS LIMITED", "WIPRO LIMITED", "HDFC BANK LIMITED"
+    };
+
+    private static final String[] CHARGE_TYPES = {
+            "SMS CHARGES", "ATM CHARGES"
+    };
+
+    /** Merchant / POS debit labels — only used when UPI is enabled on the generator form. */
+    private static final String[] MERCHANT_DEBIT_LABELS = {
+            "POS PURCHASE", "SWIGGY", "ZOMATO", "AMAZON", "FLIPKART", "FASTAG", "JIO", "AIRTEL"
+    };
+
+    private static final String BOI_CODE = "BKID";
 
     private BoiNarrationGenerator() {}
 
     record BoiTxnEntry(String narration, String reference, String type) {}
+
+    static boolean isMerchantDebitLabel(String narration) {
+        if (narration == null || narration.isBlank()) {
+            return false;
+        }
+        String upper = narration.toUpperCase(Locale.ROOT);
+        for (String label : MERCHANT_DEBIT_LABELS) {
+            if (label.equals(upper)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     static String unique(Supplier<String> supplier, Set<String> used, Random random) {
         for (int attempt = 0; attempt < 30; attempt++) {
@@ -30,7 +57,7 @@ final class BoiNarrationGenerator {
 
     static BoiTxnEntry upiDebit(Random random) {
         String party = IndianNamesPool.pickName(random);
-        return new BoiTxnEntry("TO TRANSFER-UPI/" + party, upiReference(random), "UPI");
+        return new BoiTxnEntry("UPI/" + party + "/" + mobile(random), upiReference(random), "UPI");
     }
 
     static BoiTxnEntry upiCredit(Random random) {
@@ -38,17 +65,25 @@ final class BoiNarrationGenerator {
     }
 
     static BoiTxnEntry merchantQrDebit(Random random) {
-        return upiDebit(random);
+        if (random.nextInt(100) < 45) {
+            return new BoiTxnEntry(pick(MERCHANT_DEBIT_LABELS, random), upiReference(random), "UPI");
+        }
+        String merchant = pick(MERCHANT_DEBIT_LABELS, random);
+        return new BoiTxnEntry(String.format("UPI/%s/DR/%s/%s/%s/Sent u",
+                upiReference(random), merchant, BOI_CODE, mobile(random)), upiReference(random), "UPI");
     }
 
     static BoiTxnEntry neftCredit(Random random) {
-        String party = IndianNamesPool.pickName(random);
-        return new BoiTxnEntry("BY TRANSFER-NEFT/" + party, neftReference(random), "NEFT");
+        String company = pick(NEFT_COMPANIES, random);
+        return new BoiTxnEntry("BY TRANSFER-NEFT/" + company, neftReference(random), "NEFT");
     }
 
     static BoiTxnEntry impsCredit(Random random) {
-        String party = IndianNamesPool.pickName(random);
-        return new BoiTxnEntry("BY TRANSFER-IMPS/" + party, impsReference(random), "IMPS");
+        return new BoiTxnEntry("BY TRANSFER-IMPS/REF" + digits(random, 6), impsReference(random), "IMPS");
+    }
+
+    static BoiTxnEntry impsDebit(Random random) {
+        return new BoiTxnEntry("TO TRANSFER-IMPS/REF" + digits(random, 6), impsReference(random), "IMPS");
     }
 
     static BoiTxnEntry incomingCredit(Random random) {
@@ -70,6 +105,19 @@ final class BoiNarrationGenerator {
                 "SAL");
     }
 
+    static BankRemarkGenerator.SalaryRemark configuredSalaryUnique(String companyName, Random random,
+                                                                     Set<String> used) {
+        for (int attempt = 0; attempt < 30; attempt++) {
+            BankRemarkGenerator.SalaryRemark remark = configuredSalary(companyName, random);
+            if (used.add(remark.narration())) {
+                return remark;
+            }
+        }
+        BankRemarkGenerator.SalaryRemark remark = configuredSalary(companyName, random);
+        return new BankRemarkGenerator.SalaryRemark(
+                remark.narration() + random.nextInt(1000), remark.reference(), remark.type());
+    }
+
     static String neftCreditWithCompany(String companyName, Random random) {
         return configuredSalary(companyName, random).narration();
     }
@@ -80,19 +128,19 @@ final class BoiNarrationGenerator {
     }
 
     static BoiTxnEntry atmWithdrawal(Random random) {
-        return new BoiTxnEntry("ATM CASH WDL", atmReference(random), "ATM");
+        return new BoiTxnEntry("ATM CASH WDL/" + pick(ATM_LOCATIONS, random), atmReference(random), "ATM");
     }
 
     static String salaryCreditFixed(Random random) {
-        return BankRemarkGenerator.legacySalary(LocalDate.now(), random).narration();
+        return configuredSalary("EMPLOYER", random).narration();
     }
 
     static String upiSalaryCredit(Random random) {
-        return BankRemarkGenerator.legacySalary(LocalDate.now(), random).narration();
+        return configuredSalary("EMPLOYER", random).narration();
     }
 
     static String neftSalaryCredit(Random random) {
-        return BankRemarkGenerator.legacySalary(LocalDate.now(), random).narration();
+        return configuredSalary("EMPLOYER", random).narration();
     }
 
     static String emiDebit(Random random) {
@@ -100,13 +148,10 @@ final class BoiNarrationGenerator {
     }
 
     static String interestCredit(String accountNumber, LocalDate from, LocalDate to, Random random) {
-        return "INT. CREDIT";
+        return "INT.PD";
     }
 
     static String bankCharge(Random random) {
-        if (random.nextInt(100) < 35) {
-            return BankRemarkGenerator.utilityDebit(random);
-        }
         return pick(CHARGE_TYPES, random);
     }
 
@@ -123,15 +168,35 @@ final class BoiNarrationGenerator {
     }
 
     static boolean isCreditNarration(String narration) {
-        return SbiNarrationGenerator.isCreditNarration(narration);
+        if (narration == null || narration.isBlank()) {
+            return false;
+        }
+        String upper = narration.toUpperCase(Locale.ROOT);
+        return upper.startsWith("BY TRANSFER-") || upper.equals("INT.PD");
     }
 
     static boolean isDebitNarration(String narration) {
-        return SbiNarrationGenerator.isDebitNarration(narration);
+        if (narration == null || narration.isBlank()) {
+            return false;
+        }
+        String upper = narration.toUpperCase(Locale.ROOT);
+        return upper.startsWith("TO TRANSFER-")
+                || upper.startsWith("UPI/")
+                || upper.startsWith("ATM CASH WDL")
+                || upper.equals("SMS CHARGES")
+                || upper.equals("ATM CHARGES")
+                || isMerchantDebitLabel(narration)
+                || upper.startsWith("ECS/")
+                || upper.startsWith("ACH DEBIT/")
+                || upper.startsWith("EMI PAYMENT/");
     }
 
     private static String atmReference(Random random) {
         return "ATM" + digits(random, 8);
+    }
+
+    private static String mobile(Random random) {
+        return digits(random, 10);
     }
 
     private static String normalizeCompany(String companyName) {
