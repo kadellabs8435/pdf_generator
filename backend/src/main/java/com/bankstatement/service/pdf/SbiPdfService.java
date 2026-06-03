@@ -125,23 +125,16 @@ public class SbiPdfService implements BankPdfService {
     private Cell bannerLeftCell(BankPdfImageCache imageCache) {
         Cell outer = bannerCell().setPaddingLeft(SbiPdfStyles.BANNER_PAD_LEFT);
 
-        Table inner = new Table(UnitValue.createPointArray(new float[]{34, 120}))
-                .setBorder(Border.NO_BORDER);
-
-        Cell logoCell = new Cell().setBorder(Border.NO_BORDER).setPadding(0).setVerticalAlignment(VerticalAlignment.MIDDLE);
-        Image logo = loadLogo(imageCache, 34);
+        Div stack = new Div();
+        Image logo = loadBannerLogo(imageCache);
         if (logo != null) {
-            logoCell.add(logo);
+            stack.add(logo);
         }
+        stack.add(text("Account Summary", 9, false, SbiPdfStyles.WHITE)
+                .setMarginTop(1)
+                .setTextAlignment(TextAlignment.LEFT));
 
-        Cell textCell = new Cell().setBorder(Border.NO_BORDER).setPadding(0).setPaddingLeft(6)
-                .setVerticalAlignment(VerticalAlignment.MIDDLE);
-        textCell.add(text("SBI", 18, true, SbiPdfStyles.WHITE));
-        textCell.add(text("Account Summary", 9, false, SbiPdfStyles.WHITE).setMarginTop(1));
-
-        inner.addCell(logoCell);
-        inner.addCell(textCell);
-        outer.add(inner);
+        outer.add(stack);
         return outer;
     }
 
@@ -194,9 +187,15 @@ public class SbiPdfService implements BankPdfService {
                 .setMinHeight(SbiPdfStyles.BANNER_HEIGHT);
     }
 
-    private Image loadLogo(BankPdfImageCache imageCache, float height) {
+    /** Logo width matches the Account Summary label below (aspect ratio preserved). */
+    private Image loadBannerLogo(BankPdfImageCache imageCache) {
         try {
-            return imageCache.scaledImage("pdf/sbiLogo.png", height, true);
+            Image img = new Image(imageCache.get("pdf/sbiLogo.png"));
+            float targetWidth = SbiPdfStyles.regular().getWidth("Account Summary", 9f);
+            float aspect = img.getImageWidth() / img.getImageHeight();
+            img.setWidth(targetWidth);
+            img.setHeight(targetWidth / aspect);
+            return img;
         } catch (Exception e) {
             log.warn("SBI logo not found at classpath:pdf/sbiLogo.png", e);
             return null;
