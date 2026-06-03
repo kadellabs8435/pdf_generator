@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        @page { size: A4; margin: 12mm 10mm 14mm 10mm; }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 9px; color: #000; margin: 0; }
+        .watermark {
+            position: fixed; top: 42%; left: 8%; width: 84%; text-align: center;
+            font-size: 42px; color: #e8cccc; transform: rotate(-28deg); z-index: -1;
+        }
+        .summary-title { background: #e8eef7; font-weight: bold; font-size: 11px; padding: 4px 6px; border: 1px solid #b8c9e0; }
+        table { border-collapse: collapse; width: 100%; }
+        td, th { vertical-align: top; padding: 2px 4px; }
+        .info-table td { font-size: 8.5px; line-height: 1.35; }
+        .label { font-weight: bold; white-space: nowrap; }
+        .account-grid td { border: none; padding: 1px 6px; font-size: 8.5px; }
+        .stmt-header { background: #1f4f9a; color: #fff; text-align: center; font-weight: bold; font-size: 11px; padding: 5px; margin-top: 8px; }
+        .bank-title { text-align: center; font-size: 13px; font-weight: bold; color: #1f4f9a; margin: 6px 0 2px; }
+        .branch-title { text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 6px; }
+        .txn-table { margin-top: 4px; border-top: 1px solid #999; }
+        .txn-table th { font-size: 8.5px; font-weight: bold; text-align: left; border-bottom: 1px solid #999; padding: 3px 2px; }
+        .txn-table td { font-size: 8px; padding: 3px 2px; border-bottom: 1px solid #ddd; }
+        .amt { text-align: right; white-space: nowrap; }
+        .txn-desc { font-size: 8px; line-height: 1.25; max-width: 280px; }
+        .summary-box { margin-top: 16px; border: 1px solid #999; }
+        .summary-box th, .summary-box td { border: 1px solid #999; padding: 4px; font-size: 8.5px; text-align: center; }
+        .footer-note { font-size: 7.5px; line-height: 1.4; margin-top: 10px; color: #333; }
+        .page-footer { text-align: right; font-size: 8px; margin-top: 8px; }
+        .spacer { height: 6px; }
+    </style>
+</head>
+<body>
+<div class="watermark" th:if="${watermark != null and !#strings.isEmpty(watermark)}" th:text="${watermark}"></div>
+
+<table class="info-table">
+    <tr>
+        <td colspan="2" class="summary-title">Account Summary</td>
+    </tr>
+    <tr>
+        <td style="width:55%;">
+            <div><span class="label">Welcome:</span></div>
+            <div th:text="${customer.customerName}">Customer Name</div>
+            <div th:text="${customer.customerName}">Customer Name</div>
+            <div th:text="${customer.address}">Address</div>
+            <div><span th:text="${customer.city}">City</span>, <span th:text="${customer.state}">State</span> - <span th:text="${customer.pincode}">Pin</span></div>
+            <div class="spacer"></div>
+            <div><span class="label">Date of Statement :</span> <span th:text="${statementDate}">23-05-2026</span></div>
+        </td>
+        <td style="width:45%;">
+            <table style="width:100%;">
+                <tr><td class="label">Uncleared Amount</td><td>:</td><td>0.00</td></tr>
+                <tr><td class="label">Clear Balance</td><td>:</td><td th:text="|${closingBalanceIndian}CR|">0.00CR</td></tr>
+                <tr><td class="label">+MOD Bal</td><td>:</td><td>0.00</td></tr>
+                <tr><td class="label">Lien</td><td>:</td><td>0.0</td></tr>
+                <tr><td class="label">Limit</td><td>:</td><td>0.00</td></tr>
+                <tr><td class="label">Monthly Avg Balance</td><td>:</td><td>0.00</td></tr>
+                <tr><td class="label">Interest Rate</td><td>:</td><td>2.50 % p.a.</td></tr>
+                <tr><td class="label">Drawing Power</td><td>:</td><td>0.00</td></tr>
+                <tr><td class="label">Account open Date :</td><td>:</td><td>01/01/2020</td></tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<table class="info-table" style="margin-top:6px;">
+    <tr>
+        <td style="width:50%;">
+            <div th:text="${account.branchName}">Branch Name</div>
+            <div th:text="${customer.city + ', ' + customer.state}">City State</div>
+            <div class="spacer"></div>
+            <div><span class="label">Branch Code</span> : <span th:text="${branchCode}">10144</span></div>
+            <div><span class="label">Branch Email ID</span> : sbi.<span th:text="${branchCode}">10144</span>@sbi.co.in</div>
+            <div><span class="label">Branch Phone</span> : 1800111101</div>
+        </td>
+        <td style="width:50%;">
+            <table class="account-grid">
+                <tr><td class="label">CIF Number</td><td>:</td><td th:text="${account.accountNumber != null ? account.accountNumber.substring(0, T(java.lang.Math).min(11, account.accountNumber.length())) : '00000000000'}">90934956996</td></tr>
+                <tr><td class="label">Account Number</td><td>:</td><td th:text="${account.accountNumber}">40875727599</td></tr>
+                <tr><td class="label">Account Status</td><td>:</td><td>OPEN</td></tr>
+                <tr><td class="label">Currency</td><td>:</td><td>INR</td></tr>
+                <tr><td class="label">IFSC Code</td><td>:</td><td th:text="${account.ifscCode}">SBIN0010144</td></tr>
+                <tr><td class="label">Product</td><td>:</td><td th:text="${account.accountType}">Savings Account</td></tr>
+                <tr><td class="label">Nominee Name</td><td>:</td><td>XXXXXXXXXXXXXXX</td></tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<div style="margin-top:6px; font-size:8.5px;">
+    <span class="label">Statement From :</span>
+    <span th:text="|${periodFromSbi} to ${periodToSbi}|">01-02-2026 to 30-04-2026</span>
+    &#160;&#160;
+    <span class="label">As on</span> <span th:text="${statementDate}">23-05-2026</span>
+</div>
+<div style="font-size:8.5px; margin-top:2px;">
+    <span class="label">CKYCR Number :</span> 40012745005800 &#160;&#160;
+    <span class="label">MICR Code :</span> <span th:text="${micrCode}">462002042</span>
+</div>
+
+<div class="stmt-header">STATEMENT OF ACCOUNT</div>
+<div class="bank-title">State Bank of India</div>
+<div class="branch-title">Branch Name : <span th:text="${account.branchName}">Branch</span></div>
+
+<table class="txn-table">
+    <thead>
+    <tr>
+        <th style="width:9%;">Post Date</th>
+        <th style="width:9%;">Value Date</th>
+        <th style="width:46%;">Description</th>
+        <th style="width:12%;" class="amt">Debit</th>
+        <th style="width:12%;" class="amt">Credit</th>
+        <th style="width:12%;" class="amt">Balance</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="txn : ${transactions}">
+        <td th:text="${#temporals.format(txn.date, 'dd/MM/yyyy')}">02/02/2026</td>
+        <td th:text="${#temporals.format(txn.date, 'dd/MM/yyyy')}">02/02/2026</td>
+        <td class="txn-desc">
+            <span th:if="${txn.debit != null and txn.debit > 0}">WDL TFR</span>
+            <span th:if="${txn.credit != null and txn.credit > 0}">DEP TFR</span>
+            <br/>
+            <span th:text="${txn.narration}">Narration</span>
+            <br/>
+            <span th:text="${txn.reference}">Reference</span>
+            <br/>
+            AT <span th:text="${branchCode}">10144</span> <span th:text="${account.branchName}">Branch</span>
+        </td>
+        <td class="amt">
+            <span th:if="${txn.debit != null and txn.debit > 0}" th:text="${#numbers.formatDecimal(txn.debit, 1, 2)}">1,600.00</span>
+            <span th:if="${txn.credit != null and txn.credit > 0}">-</span>
+            <span th:if="${(txn.debit == null or txn.debit == 0) and (txn.credit == null or txn.credit == 0)}">-</span>
+        </td>
+        <td class="amt">
+            <span th:if="${txn.credit != null and txn.credit > 0}" th:text="${#numbers.formatDecimal(txn.credit, 1, 2)}">3,731.00</span>
+            <span th:if="${txn.debit != null and txn.debit > 0}">-</span>
+        </td>
+        <td class="amt" th:text="${#numbers.formatDecimal(txn.balance, 1, 2)}">1,36,962.74</td>
+    </tr>
+    </tbody>
+</table>
+
+<table class="summary-box" style="page-break-inside: avoid;">
+    <tr>
+        <th colspan="6">Statement Summary : <span th:text="|${periodFromSbi} To ${periodToSbi}|">01-02-2026 To 30-04-2026</span></th>
+    </tr>
+    <tr>
+        <th>Brought Forward</th>
+        <th>Dr Count</th>
+        <th>Cr Count</th>
+        <th>Total Debits</th>
+        <th>Total Credits</th>
+        <th>Closing Balance</th>
+    </tr>
+    <tr>
+        <td th:text="|${openingBalanceIndian}CR|">1,38,562.74CR</td>
+        <td th:text="${debitCount}">76</td>
+        <td th:text="${creditCount}">17</td>
+        <td th:text="${totalDebitIndian}">3,64,429.00</td>
+        <td th:text="${totalCreditIndian}">2,25,925.04</td>
+        <td th:text="|${closingBalanceIndian}CR|">58.78CR</td>
+    </tr>
+</table>
+
+<div class="footer-note">
+    Please do not share your ATM, Debit/Credit Card number, PIN (Personal Identification number ), OTP (One-Time Password), Username or Password with
+    anyone via email, SMS, phone call, or any other medium. Bank never asks for such information.<br/>
+    If your account is operated by a Power of Attorney holder, please review the transactions with extra care.<br/>
+    This is a computer generated statement and does not require a signature.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/bank_statement_db}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production-use-at-least-32-characters-long-secret-key!!}
+    expiration-ms: 86400000
+  otp:
+    expiry-minutes: 5
+  pdf:
+    storage-path: ${PDF_STORAGE_PATH:storage/pdfs}
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173
+
+logging:
+  level:
+    com.bankstatement: DEBUG

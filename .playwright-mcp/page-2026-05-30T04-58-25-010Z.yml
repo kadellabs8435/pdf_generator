@@ -1,0 +1,28 @@
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - heading "Sign in" [level=3] [ref=e6]
+    - paragraph [ref=e7]: Use email or mobile with password, then verify OTP.
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - tablist [ref=e10]:
+        - tab "Email" [selected] [ref=e11]
+        - tab "Mobile" [ref=e12]
+      - tabpanel "Email" [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]:
+            - text: Email
+            - textbox "Email" [ref=e16]:
+              - /placeholder: admin@bankdemo.com
+          - generic [ref=e17]:
+            - text: Password
+            - textbox "Password" [ref=e18]
+          - button "Continue" [ref=e19]
+    - paragraph [ref=e20]:
+      - link "Forgot password?" [ref=e21] [cursor=pointer]:
+        - /url: /forgot-password
+    - generic [ref=e22]:
+      - paragraph [ref=e23]:
+        - strong [ref=e24]: "Demo:"
+        - text: admin@bankdemo.com / Admin@123
+      - paragraph [ref=e25]: staff@bankdemo.com / Staff@123 | viewer@bankdemo.com / Viewer@123
+      - paragraph [ref=e26]: OTP is printed in backend console (dev mode).

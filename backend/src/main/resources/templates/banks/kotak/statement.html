@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        @page { size: A4; margin: 14mm 12mm 16mm 12mm; }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 9px; color: #222; margin: 0; }
+        .watermark {
+            position: fixed; top: 42%; left: 8%; width: 84%; text-align: center;
+            font-size: 42px; color: #e8cccc; transform: rotate(-28deg); z-index: -1;
+        }
+        .header-bar { border-bottom: 3px solid #ed1c24; padding-bottom: 8px; margin-bottom: 10px; }
+        .title { font-size: 18px; font-weight: bold; color: #333; }
+        .subtitle { font-size: 11px; color: #555; margin-top: 2px; }
+        .customer-name { font-size: 12px; font-weight: bold; margin: 10px 0 4px; }
+        .customer-line { font-size: 9px; line-height: 1.4; color: #333; }
+        .meta-grid { width: 100%; margin: 10px 0; border-collapse: collapse; }
+        .meta-grid td { padding: 2px 8px 2px 0; font-size: 9px; vertical-align: top; }
+        .meta-label { color: #666; }
+        .section-title { font-size: 11px; font-weight: bold; margin: 12px 0 6px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+        .txn-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        .txn-table th { background: #f5f5f5; border-top: 1px solid #999; border-bottom: 1px solid #999; padding: 5px 4px; font-size: 8.5px; text-align: left; }
+        .txn-table td { border-bottom: 1px solid #e0e0e0; padding: 4px; font-size: 8.5px; vertical-align: top; }
+        .txn-table .num { text-align: center; width: 4%; }
+        .txn-table .date { width: 9%; white-space: nowrap; }
+        .txn-table .desc { width: 38%; line-height: 1.3; }
+        .txn-table .ref { width: 16%; }
+        .txn-table .amt { text-align: right; width: 11%; white-space: nowrap; }
+        .page-info { font-size: 8px; color: #666; text-align: right; margin-top: 8px; }
+        .end-section { margin-top: 20px; page-break-inside: avoid; }
+        .end-title { font-size: 11px; font-weight: bold; margin-bottom: 6px; }
+        .summary-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .summary-table th, .summary-table td { border: 1px solid #ccc; padding: 6px; font-size: 9px; text-align: center; }
+        .legal { font-size: 7.5px; line-height: 1.45; color: #444; margin-top: 12px; }
+        .kotak-red { color: #ed1c24; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="watermark" th:if="${watermark != null and !#strings.isEmpty(watermark)}" th:text="${watermark}"></div>
+
+<div class="header-bar">
+    <div class="title">Account Statement</div>
+    <div class="subtitle">
+        <span th:text="${periodFromKotak}">01 Feb 2026</span> -
+        <span th:text="${periodToKotak}">30 Apr 2026</span>
+    </div>
+</div>
+
+<div class="customer-name" th:text="${customer.customerName}">Customer Name</div>
+<div class="customer-line">CRN xxxxxx092</div>
+<div class="customer-line" th:text="${customer.address}">Address line 1</div>
+<div class="customer-line">
+    <span th:text="${customer.city}">City</span> - <span th:text="${customer.pincode}">462001</span>
+</div>
+<div class="customer-line">
+    <span th:text="${customer.state}">State</span> - India
+</div>
+
+<table class="meta-grid">
+    <tr>
+        <td><span class="meta-label">MICR</span> <span th:text="${micrCode}">462485007</span></td>
+        <td><span class="meta-label">IFSC Code</span> <span th:text="${account.ifscCode}">KKBK0005891</span></td>
+    </tr>
+    <tr>
+        <td><span class="meta-label">Account No.</span> <span th:text="${account.accountNumber}">1348623586</span></td>
+        <td><span class="meta-label">Account Type</span> <span th:text="${account.accountType}">Savings</span></td>
+    </tr>
+    <tr>
+        <td><span class="meta-label">Branch</span> <span th:text="${account.branchName}">Branch</span></td>
+        <td><span class="meta-label">Branch Phone Number</span> 1800 4100</td>
+    </tr>
+    <tr>
+        <td><span class="meta-label">Account Status</span> Active</td>
+        <td><span class="meta-label">Nominee Registered</span> No</td>
+    </tr>
+    <tr>
+        <td colspan="2"><span class="meta-label">Currency</span> INDIAN RUPEE</td>
+    </tr>
+</table>
+
+<div class="section-title">Savings Account Transactions</div>
+
+<table class="txn-table">
+    <thead>
+    <tr>
+        <th class="num">#</th>
+        <th class="date">Date</th>
+        <th class="desc">Description</th>
+        <th class="ref">Chq/Ref. No.</th>
+        <th class="amt">Withdrawal (Dr.)</th>
+        <th class="amt">Deposit (Cr.)</th>
+        <th class="amt">Balance</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td class="num">-</td>
+        <td class="date">-</td>
+        <td class="desc">Opening Balance</td>
+        <td class="ref">-</td>
+        <td class="amt">-</td>
+        <td class="amt">-</td>
+        <td class="amt" th:text="${openingBalance}">0.00</td>
+    </tr>
+    <tr th:each="txn, stat : ${transactions}">
+        <td class="num" th:text="${stat.count}">1</td>
+        <td class="date" th:text="${#temporals.format(txn.date, 'dd MMM yyyy')}">03 Feb 2026</td>
+        <td class="desc" th:text="${txn.narration}">Description</td>
+        <td class="ref" th:text="${txn.reference}">UPI-ref</td>
+        <td class="amt">
+            <span th:if="${txn.debit != null and txn.debit > 0}" th:text="${#numbers.formatDecimal(txn.debit, 1, 2)}">150.00</span>
+            <span th:if="${txn.debit == null or txn.debit == 0}"></span>
+        </td>
+        <td class="amt">
+            <span th:if="${txn.credit != null and txn.credit > 0}" th:text="${#numbers.formatDecimal(txn.credit, 1, 2)}">150.00</span>
+            <span th:if="${txn.credit == null or txn.credit == 0}"></span>
+        </td>
+        <td class="amt" th:text="${#numbers.formatDecimal(txn.balance, 1, 2)}">150.00</td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="page-info">
+    Statement Generated on <span th:text="${statementGeneratedOn}">21 May 2026, 16:31</span>
+</div>
+
+<div class="end-section">
+    <div class="end-title">End of Statement</div>
+    <div class="legal">
+        Any discrepancy in the statement should be brought to the notice of Kotak Mahindra Bank Ltd. within
+        one month from the date of receipt of the statement.<br/>
+        This is a system generated report and does not require signature and stamp.
+    </div>
+
+    <div class="section-title" style="margin-top:14px;">Account Summary</div>
+    <table class="summary-table">
+        <tr>
+            <th>Particulars</th>
+            <th>Opening Balance</th>
+            <th>Closing Balance</th>
+        </tr>
+        <tr>
+            <td>Savings Account (SA):</td>
+            <td th:text="${openingBalance}">0.00</td>
+            <td th:text="${closingBalance}">6.28</td>
+        </tr>
+    </table>
+
+    <div class="legal" style="margin-top:10px;">
+        <span class="kotak-red">Remember!</span> Never share personal/sensitive information like PIN, CVV, OTP or passwords with anyone.<br/><br/>
+        Kotak Mahindra Bank Ltd. | CIN: L65110MH1985PLC038137<br/>
+        Registered Office: 27 BKC, C 27, G Block, Bandra Kurla Complex, Bandra (E), Mumbai - 400 051. www.kotak.bank.in
+    </div>
+</div>
+
+</body>
+</html>
