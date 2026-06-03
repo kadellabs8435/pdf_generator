@@ -14,6 +14,11 @@ record BankPdfDocumentInfo(
         return forBank(statement, "State Bank of India");
     }
 
+    /** True when document metadata should use OpenPDF-style producer and catalog ordering. */
+    public static boolean isSbi(BankPdfDocumentInfo info) {
+        return info != null && "State Bank of India".equals(info.creator());
+    }
+
     static BankPdfDocumentInfo forKotak(Statement statement) {
         return forBank(statement, "Kotak Mahindra Bank Ltd.");
     }

@@ -92,7 +92,11 @@ final class BankPdfDocumentFactory {
 
             applyDocumentInfo(pdf, info);
             pdf.close();
-            return out.toByteArray();
+            byte[] result = out.toByteArray();
+            if (BankPdfDocumentInfo.isSbi(info)) {
+                return SbiOpenPdfMetadata.apply(result);
+            }
+            return result;
         }
     }
 
