@@ -90,7 +90,9 @@ final class BankPdfDocumentFactory {
                 normalizePage(pdf.getPage(i), pdf);
             }
 
-            applyDocumentInfo(pdf, info);
+            if (!BankPdfDocumentInfo.isSbi(info)) {
+                applyDocumentInfo(pdf, info);
+            }
             pdf.close();
             byte[] result = out.toByteArray();
             if (BankPdfDocumentInfo.isSbi(info)) {
