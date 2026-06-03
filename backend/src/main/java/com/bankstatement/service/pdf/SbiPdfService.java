@@ -126,13 +126,19 @@ public class SbiPdfService implements BankPdfService {
         Cell outer = bannerCell().setPaddingLeft(SbiPdfStyles.BANNER_PAD_LEFT);
 
         Div stack = new Div();
-        Image logo = loadBannerLogo(imageCache);
+        float logoWidth = SbiPdfStyles.regular().getWidth("Account Summary", 9f)
+                * SbiPdfStyles.BANNER_LOGO_WIDTH_SCALE;
+        Image logo = loadBannerLogo(imageCache, logoWidth);
         if (logo != null) {
             stack.add(logo);
         }
-        stack.add(text("Account Summary", 9, false, SbiPdfStyles.WHITE)
-                .setMarginTop(1)
-                .setTextAlignment(TextAlignment.LEFT));
+        Paragraph summary = text("Account Summary", 9, false, SbiPdfStyles.WHITE)
+                .setMarginTop(0.5f)
+                .setTextAlignment(TextAlignment.LEFT);
+        if (logoWidth > 0f) {
+            summary.setMarginLeft(logoWidth * SbiPdfStyles.BANNER_LOGO_TEXT_OFFSET_RATIO);
+        }
+        stack.add(summary);
 
         outer.add(stack);
         return outer;
@@ -141,8 +147,14 @@ public class SbiPdfService implements BankPdfService {
     private Cell bannerCenterCell(String asOnDate) {
         Cell outer = bannerCell().setVerticalAlignment(VerticalAlignment.MIDDLE);
 
-        Table inner = new Table(UnitValue.createPointArray(new float[]{12, 80}))
-                .setBorder(Border.NO_BORDER);
+        String dateLabel = "As on " + asOnDate;
+        float boxWidth = SbiPdfStyles.BANNER_DATE_BOX_WIDTH;
+        float innerWidth = boxWidth - (SbiPdfStyles.BANNER_DATE_BOX_PAD_H * 2f);
+
+        Table inner = new Table(UnitValue.createPointArray(new float[]{12, innerWidth - 14f}))
+                .setBorder(Border.NO_BORDER)
+                .setWidth(UnitValue.createPointValue(innerWidth))
+                .setFixedLayout();
 
         Cell iconCell = new Cell().setBorder(Border.NO_BORDER).setPadding(0).setVerticalAlignment(VerticalAlignment.MIDDLE);
         iconCell.add(new Paragraph(SbiPdfIcons.CALENDAR)
@@ -151,17 +163,22 @@ public class SbiPdfService implements BankPdfService {
                 .setFontColor(SbiPdfStyles.WHITE)
                 .setMargin(0));
 
-        Cell dateCell = new Cell().setBorder(Border.NO_BORDER).setPadding(0).setVerticalAlignment(VerticalAlignment.MIDDLE);
-        dateCell.add(text("As on: " + asOnDate, SbiPdfStyles.FONT_BODY, false, SbiPdfStyles.WHITE));
+        Cell dateCell = new Cell().setBorder(Border.NO_BORDER).setPadding(0).setPaddingLeft(2)
+                .setVerticalAlignment(VerticalAlignment.MIDDLE);
+        dateCell.add(text(dateLabel, SbiPdfStyles.FONT_BODY, false, SbiPdfStyles.WHITE)
+                .setKeepTogether(true));
 
         inner.addCell(iconCell);
         inner.addCell(dateCell);
 
         Div box = new Div()
-                .setWidth(UnitValue.createPointValue(SbiPdfStyles.BANNER_DATE_BOX_WIDTH))
+                .setWidth(UnitValue.createPointValue(boxWidth))
                 .setBorder(new SolidBorder(SbiPdfStyles.WHITE, 0.8f))
                 .setBorderRadius(new BorderRadius(8))
-                .setPadding(5)
+                .setPaddingLeft(SbiPdfStyles.BANNER_DATE_BOX_PAD_H)
+                .setPaddingRight(SbiPdfStyles.BANNER_DATE_BOX_PAD_H)
+                .setPaddingTop(SbiPdfStyles.BANNER_DATE_BOX_PAD_V)
+                .setPaddingBottom(SbiPdfStyles.BANNER_DATE_BOX_PAD_V)
                 .setHorizontalAlignment(com.itextpdf.layout.properties.HorizontalAlignment.CENTER);
         box.add(inner);
         outer.add(box);
@@ -174,7 +191,7 @@ public class SbiPdfService implements BankPdfService {
                 .setVerticalAlignment(VerticalAlignment.MIDDLE)
                 .setPaddingRight(SbiPdfStyles.BANNER_PAD_RIGHT);
         cell.add(text("Welcome:", SbiPdfStyles.FONT_BODY, false, SbiPdfStyles.WHITE));
-        cell.add(text(fullName, 11, true, SbiPdfStyles.WHITE).setMarginTop(2));
+        cell.add(text(fullName, SbiPdfStyles.BANNER_WELCOME_NAME_SIZE, false, SbiPdfStyles.WHITE).setMarginTop(1));
         return cell;
     }
 
@@ -187,17 +204,16 @@ public class SbiPdfService implements BankPdfService {
                 .setMinHeight(SbiPdfStyles.BANNER_HEIGHT);
     }
 
-    /** Logo width matches the Account Summary label below (aspect ratio preserved). */
-    private Image loadBannerLogo(BankPdfImageCache imageCache) {
+    /** Transparent banner logo (white wordmark + cyan mark, no white box). */
+    private Image loadBannerLogo(BankPdfImageCache imageCache, float targetWidth) {
         try {
-            Image img = new Image(imageCache.get("pdf/sbiLogo.png"));
-            float targetWidth = SbiPdfStyles.regular().getWidth("Account Summary", 9f);
+            Image img = new Image(imageCache.get("pdf/sbiLogoBanner.png"));
             float aspect = img.getImageWidth() / img.getImageHeight();
             img.setWidth(targetWidth);
             img.setHeight(targetWidth / aspect);
             return img;
         } catch (Exception e) {
-            log.warn("SBI logo not found at classpath:pdf/sbiLogo.png", e);
+            log.warn("SBI banner logo not found at classpath:pdf/sbiLogoBanner.png", e);
             return null;
         }
     }

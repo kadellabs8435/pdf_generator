@@ -28,13 +28,22 @@ final class SbiPdfStyles {
     static final float MARGIN_TOP = 0;
     static final float MARGIN_LEFT = 20;
     static final float MARGIN_RIGHT = 20;
-    static final float BANNER_HEIGHT = 68;
+    static final float BANNER_HEIGHT = 60f;
 
     static final float BANNER_PAD_LEFT = 18f;
     static final float BANNER_PAD_RIGHT = 18f;
-    static final float BANNER_PAD_TOP = 8f;
-    static final float BANNER_PAD_BOTTOM = 8f;
-    static final float BANNER_DATE_BOX_WIDTH = 110f;
+    static final float BANNER_PAD_TOP = 6f;
+    static final float BANNER_PAD_BOTTOM = 6f;
+    /** Fixed width for banner date pill — avoids underestimating text width and wrapping. */
+    static final float BANNER_DATE_BOX_WIDTH = 100f;
+    /** Compact date pill horizontal/vertical padding (see bannerCenterCell). */
+    static final float BANNER_DATE_BOX_PAD_H = 5f;
+    static final float BANNER_DATE_BOX_PAD_V = 3f;
+    /** Logo width multiplier vs Account Summary label width. */
+    static final float BANNER_LOGO_WIDTH_SCALE = 1.25f;
+    /** Account Summary aligns with SBI wordmark inside combined logo asset. */
+    static final float BANNER_LOGO_TEXT_OFFSET_RATIO = 0.34f;
+    static final float BANNER_WELCOME_NAME_SIZE = 10f;
 
     static final float TITLE_MARGIN_TOP = 12f;
     static final float TITLE_LINE_MARGIN_TOP = 8f;
